@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض دردشة لايف تيك توك</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎥 عرض دردشة لايف تيك توك</h1>
+        </header>
+
+        <div class="connection-panel">
+            <div class="input-group">
+                <input type="text" id="usernameInput" placeholder="ادخل اسم المستخدم في تيك توك">
+                <button id="connectBtn">اتصال</button>
+                <button id="disconnectBtn" disabled>قطع الاتصال</button>
+            </div>
+            <div id="connectionStatus" class="status">غير متصل</div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat">
+                <span class="stat-label">عدد المشاهدين:</span>
+                <span id="viewerCount">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">رقم الغرفة:</span>
+                <span id="roomId">-</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="chat-container">
+                <h3>💬 الرسائل</h3>
+                <div id="chatMessages" class="messages"></div>
+            </div>
+
+            <div class="gifts-container">
+                <h3>🎁 الهدايا</h3>
+                <div id="giftMessages" class="messages"></div>
+            </div>
+
+            <div class="events-container">
+                <h3>⚡ الأحداث</h3>
+                <div id="eventMessages" class="messages"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
