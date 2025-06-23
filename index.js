@@ -54,6 +54,7 @@ io.on('connection', (socket) => {
         username: data.uniqueId,
         nickname: data.nickname,
         message: data.comment,
+        profilePictureUrl: data.profilePictureUrl,
         timestamp: new Date().toLocaleTimeString()
       });
     });
@@ -66,6 +67,7 @@ io.on('connection', (socket) => {
         giftName: data.giftName,
         giftType: data.giftType,
         diamondCount: data.diamondCount,
+        profilePictureUrl: data.profilePictureUrl,
         timestamp: new Date().toLocaleTimeString()
       });
     });
@@ -77,6 +79,7 @@ io.on('connection', (socket) => {
         nickname: data.nickname,
         likeCount: data.likeCount,
         totalLikeCount: data.totalLikeCount,
+        profilePictureUrl: data.profilePictureUrl,
         timestamp: new Date().toLocaleTimeString()
       });
     });
@@ -87,6 +90,7 @@ io.on('connection', (socket) => {
         username: data.uniqueId,
         nickname: data.nickname,
         action: data.displayType,
+        profilePictureUrl: data.profilePictureUrl,
         timestamp: new Date().toLocaleTimeString()
       });
     });

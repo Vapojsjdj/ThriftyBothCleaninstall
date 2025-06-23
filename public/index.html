@@ -1,18 +1,15 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عرض دردشة لايف تيك توك</title>
+    <title>معركة كرات الدردشة - تيك توك لايف</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎥 عرض دردشة لايف تيك توك</h1>
-        </header>
+    <div class="game-container">
+        <h1 class="game-title">⚔️ معركة كرات الدردشة</h1>
 
         <div class="connection-panel">
             <div class="input-group">
@@ -29,26 +26,17 @@
                 <span id="viewerCount">0</span>
             </div>
             <div class="stat">
-                <span class="stat-label">رقم الغرفة:</span>
-                <span id="roomId">-</span>
+                <span class="stat-label">الكرات النشطة:</span>
+                <span id="activeBalls">0</span>
             </div>
         </div>
 
-        <div class="content">
-            <div class="chat-container">
-                <h3>💬 الرسائل</h3>
-                <div id="chatMessages" class="messages"></div>
-            </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-            <div class="gifts-container">
-                <h3>🎁 الهدايا</h3>
-                <div id="giftMessages" class="messages"></div>
-            </div>
-
-            <div class="events-container">
-                <h3>⚡ الأحداث</h3>
-                <div id="eventMessages" class="messages"></div>
-            </div>
+        <div class="controls">
+            🎮 كل شخص يكتب في الدردشة يظهر ككرة متحركة بصورته واسمه
+            <br>
+            💥 الكرات ترتد وتتفاعل مع بعض • 🎁 الهدايا تعطي طاقة إضافية • ❤️ الإعجابات تزيد الحجم
         </div>
     </div>
 
