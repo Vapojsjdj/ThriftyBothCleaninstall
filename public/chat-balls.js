@@ -142,10 +142,22 @@ function createChatBall(data, type = 'chat') {
         ball.style.background = randomColor;
     }
     
-    // Create avatar (first letter of nickname)
+    // Create avatar (profile picture or first letter)
     const avatar = document.createElement('div');
     avatar.className = 'ball-avatar';
-    avatar.textContent = data.nickname ? data.nickname.charAt(0).toUpperCase() : '👤';
+    
+    if (data.profilePictureUrl) {
+        const img = document.createElement('img');
+        img.src = data.profilePictureUrl;
+        img.className = 'profile-pic';
+        img.onerror = function() {
+            // If image fails to load, show first letter
+            avatar.innerHTML = data.nickname ? data.nickname.charAt(0).toUpperCase() : '👤';
+        };
+        avatar.appendChild(img);
+    } else {
+        avatar.textContent = data.nickname ? data.nickname.charAt(0).toUpperCase() : '👤';
+    }
     
     // Create username display
     const username = document.createElement('div');
