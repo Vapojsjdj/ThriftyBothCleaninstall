@@ -15,7 +15,9 @@ const ctx = canvas.getContext('2d');
 let isConnected = false;
 let balls = [];
 let effects = [];
+let guns = [];
 let animationId;
+let audioEnabled = true;
 
 // Canvas setup
 function resizeCanvas() {
@@ -31,13 +33,15 @@ resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 // Event listeners
-connectBtn.addEventListener('click', connectToTikTok);
-disconnectBtn.addEventListener('click', disconnectFromTikTok);
-usernameInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        connectToTikTok();
-    }
-});
+if (connectBtn) connectBtn.addEventListener('click', connectToTikTok);
+if (disconnectBtn) disconnectBtn.addEventListener('click', disconnectFromTikTok);
+if (usernameInput) {
+    usernameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            connectToTikTok();
+        }
+    });
+}
 
 // Socket events
 socket.on('tiktok_connected', (data) => {
@@ -138,6 +142,58 @@ function addChatBall(data) {
     updateActiveBalls();
 }
 
+function spawnGun() {
+    if (guns.length < 3) { // Maximum 3 guns at once
+        const gun = new Gun(
+            Math.random() * (canvas.width - 60) + 30,
+            Math.random() * (canvas.height - 60) + 30
+        );
+        guns.push(gun);
+    }
+}
+
+function playSound(type) {
+    if (!audioEnabled) return;
+    
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        switch(type) {
+            case 'shoot':
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+                break;
+            case 'pickup':
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+                break;
+            case 'hit':
+                oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+                break;
+        }
+    } catch (e) {
+        console.log('Audio not supported');
+    }
+}
+
 function addGiftEffect(data) {
     const ball = balls.find(ball => ball.username === data.username);
     if (ball) {
@@ -199,13 +255,82 @@ function stopGameLoop() {
 function update() {
     const now = Date.now();
     
+    // Spawn guns randomly
+    if (Math.random() < 0.003 && isConnected) {
+        spawnGun();
+    }
+    
     // Update balls
     balls.forEach(ball => {
         ball.update(canvas.width, canvas.height);
         
+        // Check gun pickup
+        guns.forEach((gun, gunIndex) => {
+            const dx = ball.x - gun.x;
+            const dy = ball.y - gun.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < ball.size + 15 && !ball.hasGun) {
+                ball.hasGun = true;
+                ball.gunCooldown = 0;
+                guns.splice(gunIndex, 1);
+                playSound('pickup');
+                effects.push(new PickupEffect(gun.x, gun.y));
+            }
+        });
+        
+        // Auto-shoot at nearest ball
+        if (ball.hasGun && ball.gunCooldown <= 0) {
+            const nearestBall = findNearestBall(ball);
+            if (nearestBall && getDistance(ball, nearestBall) < 200) {
+                shootBullet(ball, nearestBall);
+                ball.gunCooldown = 60; // 1 second cooldown at 60fps
+                playSound('shoot');
+            }
+        }
+        
+        if (ball.gunCooldown > 0) {
+            ball.gunCooldown--;
+        }
+        
         // Remove inactive balls after 30 seconds
         if (now - ball.lastActivity > 30000) {
             ball.active = false;
+        }
+    });
+    
+    // Update bullets
+    effects.forEach(effect => {
+        effect.update();
+        
+        // Check bullet collisions
+        if (effect instanceof Bullet) {
+            balls.forEach(ball => {
+                if (ball !== effect.shooter) {
+                    const dx = ball.x - effect.x;
+                    const dy = ball.y - effect.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < ball.size + 3) {
+                        // Hit!
+                        ball.energy = Math.max(ball.energy - 20, 0);
+                        ball.scale = 1.3;
+                        effect.active = false;
+                        playSound('hit');
+                        
+                        // Add hit effect
+                        effects.push(new HitEffect(ball.x, ball.y));
+                        
+                        // If ball dies, transfer gun to shooter
+                        if (ball.energy <= 0) {
+                            ball.active = false;
+                            if (!effect.shooter.hasGun) {
+                                effect.shooter.hasGun = ball.hasGun;
+                            }
+                        }
+                    }
+                }
+            });
         }
     });
     
@@ -215,11 +340,54 @@ function update() {
     // Remove inactive balls
     balls = balls.filter(ball => ball.active);
     
+    // Update guns
+    guns.forEach(gun => gun.update());
+    
     // Update effects
     effects.forEach(effect => effect.update());
     effects = effects.filter(effect => effect.active);
     
     updateActiveBalls();
+}
+
+function findNearestBall(currentBall) {
+    let nearest = null;
+    let minDistance = Infinity;
+    
+    balls.forEach(ball => {
+        if (ball !== currentBall && ball.active) {
+            const distance = getDistance(currentBall, ball);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearest = ball;
+            }
+        }
+    });
+    
+    return nearest;
+}
+
+function getDistance(ball1, ball2) {
+    const dx = ball1.x - ball2.x;
+    const dy = ball1.y - ball2.y;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+function shootBullet(shooter, target) {
+    const dx = target.x - shooter.x;
+    const dy = target.y - shooter.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    const bullet = new Bullet(
+        shooter.x,
+        shooter.y,
+        (dx / distance) * 8,
+        (dy / distance) * 8,
+        shooter
+    );
+    
+    effects.push(bullet);
+    effects.push(new MuzzleFlash(shooter.x, shooter.y));
 }
 
 function checkBallCollisions() {
@@ -288,6 +456,9 @@ function draw() {
         ctx.stroke();
     }
     
+    // Draw guns
+    guns.forEach(gun => gun.draw(ctx));
+    
     // Draw effects (behind balls)
     effects.forEach(effect => effect.draw(ctx));
     
@@ -313,6 +484,8 @@ class ChatBall {
         this.lastActivity = Date.now();
         this.active = true;
         this.colors = this.generateColors();
+        this.hasGun = false;
+        this.gunCooldown = 0;
         
         // Load profile image
         if (profilePictureUrl) {
@@ -417,6 +590,22 @@ class ChatBall {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size * this.scale, 0, Math.PI * 2);
         ctx.stroke();
+        
+        // Gun indicator
+        if (this.hasGun) {
+            ctx.fillStyle = '#FFD700';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('🔫', this.x + this.size, this.y - this.size);
+            
+            // Cooldown indicator
+            if (this.gunCooldown > 0) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * this.scale + 5, 0, Math.PI * 2 * (this.gunCooldown / 60));
+                ctx.stroke();
+            }
+        }
         
         // Username
         ctx.fillStyle = '#333';
@@ -651,6 +840,247 @@ class CollisionEffect {
             ctx.fill();
             ctx.restore();
         });
+    }
+}
+
+// Gun class
+class Gun {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.rotation = 0;
+        this.bobOffset = 0;
+        this.active = true;
+        this.life = 600; // 10 seconds at 60fps
+    }
+    
+    update() {
+        this.rotation += 0.05;
+        this.bobOffset += 0.1;
+        this.life--;
+        if (this.life <= 0) {
+            this.active = false;
+        }
+    }
+    
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y + Math.sin(this.bobOffset) * 3);
+        ctx.rotate(this.rotation);
+        
+        // Gun shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(-12, -5, 24, 10);
+        
+        // Gun body
+        ctx.fillStyle = '#444';
+        ctx.fillRect(-10, -4, 20, 8);
+        
+        // Gun barrel
+        ctx.fillStyle = '#222';
+        ctx.fillRect(8, -2, 8, 4);
+        
+        // Gun grip
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(-8, 2, 6, 8);
+        
+        // Highlight
+        ctx.fillStyle = '#666';
+        ctx.fillRect(-8, -3, 16, 2);
+        
+        ctx.restore();
+        
+        // Pickup glow
+        ctx.save();
+        ctx.globalAlpha = 0.3 + Math.sin(this.bobOffset) * 0.2;
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 25, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
+// Bullet class
+class Bullet {
+    constructor(x, y, vx, vy, shooter) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.shooter = shooter;
+        this.life = 120; // 2 seconds
+        this.active = true;
+        this.trail = [];
+    }
+    
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        // Add trail
+        this.trail.push({x: this.x, y: this.y});
+        if (this.trail.length > 5) {
+            this.trail.shift();
+        }
+        
+        this.life--;
+        if (this.life <= 0) {
+            this.active = false;
+        }
+        
+        // Boundary check
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+            this.active = false;
+        }
+    }
+    
+    draw(ctx) {
+        // Draw trail
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        this.trail.forEach((point, index) => {
+            if (index === 0) {
+                ctx.moveTo(point.x, point.y);
+            } else {
+                ctx.lineTo(point.x, point.y);
+            }
+        });
+        ctx.stroke();
+        
+        // Draw bullet
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.strokeStyle = '#FFA500';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+}
+
+// Muzzle flash effect
+class MuzzleFlash {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.life = 5;
+        this.maxLife = 5;
+        this.active = true;
+        this.size = 20;
+    }
+    
+    update() {
+        this.life--;
+        if (this.life <= 0) {
+            this.active = false;
+        }
+    }
+    
+    draw(ctx) {
+        const alpha = this.life / this.maxLife;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        
+        // Flash
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+        gradient.addColorStop(0, '#FFFF00');
+        gradient.addColorStop(0.5, '#FF6600');
+        gradient.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.restore();
+    }
+}
+
+// Hit effect
+class HitEffect {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.particles = [];
+        this.life = 30;
+        this.active = true;
+        
+        for (let i = 0; i < 6; i++) {
+            this.particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8,
+                life: 30,
+                size: Math.random() * 4 + 2
+            });
+        }
+    }
+    
+    update() {
+        this.particles.forEach(particle => {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            particle.vx *= 0.95;
+            particle.vy *= 0.95;
+            particle.life--;
+        });
+        
+        this.particles = this.particles.filter(p => p.life > 0);
+        this.life--;
+        
+        if (this.life <= 0 || this.particles.length === 0) {
+            this.active = false;
+        }
+    }
+    
+    draw(ctx) {
+        this.particles.forEach(particle => {
+            const alpha = particle.life / 30;
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        });
+    }
+}
+
+// Pickup effect
+class PickupEffect {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.life = 30;
+        this.maxLife = 30;
+        this.active = true;
+        this.size = 0;
+    }
+    
+    update() {
+        this.size += 2;
+        this.life--;
+        if (this.life <= 0) {
+            this.active = false;
+        }
+    }
+    
+    draw(ctx) {
+        const alpha = this.life / this.maxLife;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#00FF00';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
     }
 }
 
