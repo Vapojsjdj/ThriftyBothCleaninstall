@@ -4,98 +4,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة كرات الدردشة - تيك توك لايف</title>
+    <title>عرض دردشة لايف تيك توك</title>
     <link rel="stylesheet" href="style.css">
     <script src="/socket.io/socket.io.js"></script>
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-family: 'Cairo', Arial, sans-serif;
-            min-height: 100vh;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            text-align: center;
-        }
-        
-        .main-title {
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .description {
-            font-size: 1.2em;
-            margin-bottom: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .game-link {
-            display: inline-block;
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            padding: 20px 40px;
-            text-decoration: none;
-            border-radius: 15px;
-            font-weight: bold;
-            font-size: 1.5em;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s;
-        }
-        
-        .game-link:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
-        }
-        
-        .features {
-            margin-top: 50px;
-            text-align: right;
-        }
-        
-        .feature {
-            background: rgba(255, 255, 255, 0.1);
-            margin: 10px 0;
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-        }
-    </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="main-title">🎾 لعبة كرات الدردشة</h1>
-        
-        <div class="description">
-            <p>اتصل بأي بث مباشر على تيك توك وشاهد كيف تتحول كل رسالة دردشة إلى كرة متحركة بصورة المستخدم واسمه!</p>
+        <header>
+            <h1>🎥 عرض دردشة لايف تيك توك</h1>
+        </header>
+
+        <div class="connection-panel">
+            <div class="input-group">
+                <input type="text" id="usernameInput" placeholder="ادخل اسم المستخدم في تيك توك">
+                <button id="connectBtn">اتصال</button>
+                <button id="disconnectBtn" disabled>قطع الاتصال</button>
+            </div>
+            <div id="connectionStatus" class="status">غير متصل</div>
         </div>
-        
-        <a href="/chat-balls" class="game-link">
-            🎮 ابدأ اللعبة الآن
-        </a>
-        
-        <div class="features">
-            <div class="feature">
-                ✨ كل رسالة دردشة تصبح كرة متحركة
+
+        <div class="stats-panel">
+            <div class="stat">
+                <span class="stat-label">عدد المشاهدين:</span>
+                <span id="viewerCount">0</span>
             </div>
-            <div class="feature">
-                🖼️ صور البروفايل والأسماء تظهر على الكرات
+            <div class="stat">
+                <span class="stat-label">رقم الغرفة:</span>
+                <span id="roomId">-</span>
             </div>
-            <div class="feature">
-                🎁 الهدايا والإعجابات تظهر بألوان مختلفة
+        </div>
+
+        <div class="content">
+            <div class="chat-container">
+                <h3>💬 الرسائل</h3>
+                <div id="chatMessages" class="messages"></div>
             </div>
-            <div class="feature">
-                📱 يعمل على الهاتف والكمبيوتر
+
+            <div class="gifts-container">
+                <h3>🎁 الهدايا</h3>
+                <div id="giftMessages" class="messages"></div>
+            </div>
+
+            <div class="events-container">
+                <h3>⚡ الأحداث</h3>
+                <div id="eventMessages" class="messages"></div>
             </div>
         </div>
     </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
