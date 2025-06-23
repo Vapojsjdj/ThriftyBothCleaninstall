@@ -1,0 +1,50 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة كرات الدردشة المتحركة</title>
+    <link rel="stylesheet" href="chat-balls.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>🎾 لعبة كرات الدردشة المتحركة</h1>
+            <button onclick="location.href='/'" class="back-btn">العودة للصفحة الرئيسية</button>
+        </header>
+
+        <div class="connection-panel">
+            <div class="input-group">
+                <input type="text" id="usernameInput" placeholder="ادخل اسم المستخدم في تيك توك">
+                <button id="connectBtn">اتصال</button>
+                <button id="disconnectBtn" disabled>قطع الاتصال</button>
+            </div>
+            <div id="connectionStatus" class="status">غير متصل</div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <span>المشاهدين: </span>
+                <span id="viewerCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span>الكرات النشطة: </span>
+                <span id="activeBalls">0</span>
+            </div>
+        </div>
+
+        <div id="gameArea" class="game-area">
+            <!-- الكرات ستظهر هنا -->
+        </div>
+
+        <div class="controls">
+            <button id="clearBalls">مسح جميع الكرات</button>
+            <button id="pauseAnimation">إيقاف/تشغيل الحركة</button>
+        </div>
+    </div>
+
+    <script src="chat-balls.js"></script>
+</body>
+</html>

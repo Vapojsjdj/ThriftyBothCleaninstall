@@ -16,6 +16,11 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/index.html');
 });
 
+// Chat balls game route
+app.get('/chat-balls', (req, res) => {
+  res.sendFile(__dirname + '/public/chat-balls.html');
+});
+
 // Store active connections
 const tiktokConnections = new Map();
 
