@@ -1,4 +1,3 @@
-
 const socket = io();
 
 // Elements
@@ -14,7 +13,6 @@ const pauseAnimationBtn = document.getElementById('pauseAnimation');
 
 // Game state
 let isConnected = false;
-let animationsPaused = false;
 let ballCount = 0;
 const activeBallsList = new Set();
 
@@ -25,19 +23,17 @@ const animationPatterns = [
     'diagonal'
 ];
 
-// Color schemes for different message types
-const colorSchemes = {
-    chat: [
-        'linear-gradient(135deg, #ff6b6b, #4ecdc4)',
-        'linear-gradient(135deg, #a8edea, #fed6e3)',
-        'linear-gradient(135deg, #ffecd2, #fcb69f)',
-        'linear-gradient(135deg, #ff9a9e, #fecfef)',
-        'linear-gradient(135deg, #a8caba, #5d4e75)'
-    ],
-    gift: 'linear-gradient(135deg, #ffd700, #ff8c00)',
-    like: 'linear-gradient(135deg, #ff69b4, #ff1493)',
-    event: 'linear-gradient(135deg, #667eea, #764ba2)'
-};
+// Color schemes for different users
+const colorSchemes = [
+    'linear-gradient(135deg, #ff6b6b, #4ecdc4)',
+    'linear-gradient(135deg, #a8edea, #fed6e3)',
+    'linear-gradient(135deg, #ffecd2, #fcb69f)',
+    'linear-gradient(135deg, #ff9a9e, #fecfef)',
+    'linear-gradient(135deg, #a8caba, #5d4e75)',
+    'linear-gradient(135deg, #667eea, #764ba2)',
+    'linear-gradient(135deg, #ffd89b, #19547b)',
+    'linear-gradient(135deg, #c471f5, #fa71cd)'
+];
 
 // Event listeners
 connectBtn.addEventListener('click', connectToTikTok);
@@ -65,28 +61,28 @@ socket.on('tiktok_connected', (data) => {
 });
 
 socket.on('chat_message', (data) => {
-    createChatBall(data, 'chat');
+    createChatBall(data);
 });
 
 socket.on('gift_received', (data) => {
     createChatBall({
         ...data,
-        message: `🎁 ${data.giftName} (${data.diamondCount} 💎)`
-    }, 'gift');
+        message: `🎁 ${data.giftName}`
+    });
 });
 
 socket.on('like_received', (data) => {
     createChatBall({
         ...data,
         message: `❤️ ${data.likeCount} إعجاب`
-    }, 'like');
+    });
 });
 
 socket.on('social_event', (data) => {
     createChatBall({
         ...data,
         message: `⚡ ${data.action}`
-    }, 'event');
+    });
 });
 
 socket.on('room_update', (data) => {
@@ -109,10 +105,10 @@ function connectToTikTok() {
         alert('يرجى إدخال اسم المستخدم');
         return;
     }
-    
+
     updateConnectionStatus('جاري الاتصال...', false);
     connectBtn.disabled = true;
-    
+
     socket.emit('connect_tiktok', username);
 }
 
@@ -131,56 +127,53 @@ function updateConnectionStatus(message, connected) {
     connectionStatus.className = connected ? 'status connected' : 'status disconnected';
 }
 
-function createChatBall(data, type = 'chat') {
+function createChatBall(data) {
     const ball = document.createElement('div');
-    ball.className = `chat-ball ${type}`;
+    ball.className = 'chat-ball';
     ball.id = `ball-${ballCount++}`;
-    
-    // Set random color for chat messages
-    if (type === 'chat') {
-        const randomColor = colorSchemes.chat[Math.floor(Math.random() * colorSchemes.chat.length)];
-        ball.style.background = randomColor;
-    }
-    
+
+    // Set random color
+    const randomColor = colorSchemes[Math.floor(Math.random() * colorSchemes.length)];
+    ball.style.background = randomColor;
+
     // Create avatar (profile picture or first letter)
     const avatar = document.createElement('div');
     avatar.className = 'ball-avatar';
-    
+
     if (data.profilePictureUrl) {
         const img = document.createElement('img');
         img.src = data.profilePictureUrl;
         img.className = 'profile-pic';
         img.onerror = function() {
-            // If image fails to load, show first letter
             avatar.innerHTML = data.nickname ? data.nickname.charAt(0).toUpperCase() : '👤';
         };
         avatar.appendChild(img);
     } else {
         avatar.textContent = data.nickname ? data.nickname.charAt(0).toUpperCase() : '👤';
     }
-    
+
     // Create username display
     const username = document.createElement('div');
     username.className = 'ball-username';
     username.textContent = data.nickname || data.username || 'مجهول';
-    
+
     // Create message tooltip
     const message = document.createElement('div');
     message.className = 'ball-message';
     message.textContent = data.message || data.comment || '';
-    
+
     ball.appendChild(avatar);
     ball.appendChild(username);
     ball.appendChild(message);
-    
+
     // Set random starting position and animation
     setRandomAnimation(ball);
-    
+
     // Add to game area
     gameArea.appendChild(ball);
     activeBallsList.add(ball.id);
     updateActiveBallsCount();
-    
+
     // Remove ball after animation completes
     setTimeout(() => {
         if (ball.parentNode) {
@@ -188,8 +181,8 @@ function createChatBall(data, type = 'chat') {
             activeBallsList.delete(ball.id);
             updateActiveBallsCount();
         }
-    }, getAnimationDuration(ball.style.animationName));
-    
+    }, 10000); // 10 seconds
+
     // Add click interaction
     ball.addEventListener('click', () => {
         ball.style.transform = 'scale(1.3)';
@@ -201,9 +194,9 @@ function createChatBall(data, type = 'chat') {
 
 function setRandomAnimation(ball) {
     const pattern = animationPatterns[Math.floor(Math.random() * animationPatterns.length)];
-    const duration = Math.random() * 5 + 5; // 5-10 seconds
+    const duration = Math.random() * 3 + 7; // 7-10 seconds
     const delay = Math.random() * 2; // 0-2 seconds delay
-    
+
     // Set starting position based on animation pattern
     switch (pattern) {
         case 'floatAcross':
@@ -219,30 +212,12 @@ function setRandomAnimation(ball) {
             ball.style.top = window.innerHeight + 'px';
             break;
     }
-    
+
     ball.style.animationName = pattern;
     ball.style.animationDuration = duration + 's';
     ball.style.animationDelay = delay + 's';
     ball.style.animationTimingFunction = 'linear';
     ball.style.animationFillMode = 'forwards';
-    
-    if (animationsPaused) {
-        ball.style.animationPlayState = 'paused';
-    }
-}
-
-function getAnimationDuration(animationName) {
-    // Return duration in milliseconds based on animation type
-    switch (animationName) {
-        case 'floatAcross':
-            return 8000;
-        case 'floatUp':
-            return 7000;
-        case 'diagonal':
-            return 10000;
-        default:
-            return 8000;
-    }
 }
 
 function createSystemMessage(message) {
@@ -250,7 +225,7 @@ function createSystemMessage(message) {
         nickname: 'النظام',
         username: 'system',
         message: message
-    }, 'event');
+    });
 }
 
 function clearAllBalls() {

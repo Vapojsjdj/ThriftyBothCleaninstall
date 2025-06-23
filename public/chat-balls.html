@@ -4,45 +4,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة كرات الدردشة المتحركة</title>
-    <link rel="stylesheet" href="chat-balls.css">
+    <title>لعبة كرات الدردشة</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-family: 'Cairo', Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        .game-header {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .game-title {
+            font-size: 1.8em;
+            margin: 0;
+            color: #fff;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .connection-panel {
+            position: fixed;
+            top: 100px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            z-index: 999;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        input {
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+        }
+        
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            background: #4CAF50;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status.connected {
+            background-color: rgba(212, 237, 218, 0.9);
+            color: #155724;
+        }
+        
+        .status.disconnected {
+            background-color: rgba(248, 215, 218, 0.9);
+            color: #721c24;
+        }
+        
+        .stats {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 999;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-item {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .game-area {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .chat-ball {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            border: 3px solid white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s;
+            z-index: 100;
+        }
+        
+        .chat-ball:hover {
+            transform: scale(1.1);
+        }
+        
+        .ball-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 2px;
+            overflow: hidden;
+        }
+        
+        .profile-pic {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .ball-username {
+            font-size: 8px;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 70px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        
+        .ball-message {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            max-width: 120px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .chat-ball:hover .ball-message {
+            opacity: 1;
+        }
+        
+        /* Animations */
+        @keyframes floatAcross {
+            from {
+                left: -100px;
+            }
+            to {
+                left: calc(100vw + 100px);
+            }
+        }
+        
+        @keyframes floatUp {
+            from {
+                top: calc(100vh + 100px);
+            }
+            to {
+                top: -100px;
+            }
+        }
+        
+        @keyframes diagonal {
+            from {
+                left: -100px;
+                top: calc(100vh + 100px);
+            }
+            to {
+                left: calc(100vw + 100px);
+                top: -100px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .game-header {
+                top: 10px;
+                padding: 10px 20px;
+            }
+            
+            .game-title {
+                font-size: 1.2em;
+            }
+            
+            .connection-panel {
+                top: 70px;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .chat-ball {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .ball-avatar {
+                width: 25px;
+                height: 25px;
+                font-size: 14px;
+            }
+            
+            .ball-username {
+                font-size: 7px;
+            }
+        }
+    </style>
     <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-    <div class="game-container">
-        <header class="game-header">
-            <h1>🎾 لعبة كرات الدردشة المتحركة</h1>
-            <button onclick="location.href='/'" class="back-btn">العودة للصفحة الرئيسية</button>
-        </header>
+    <div class="game-header">
+        <h1 class="game-title">🎾 لعبة كرات الدردشة</h1>
+    </div>
 
-        <div class="connection-panel">
-            <div class="input-group">
-                <input type="text" id="usernameInput" placeholder="ادخل اسم المستخدم في تيك توك">
-                <button id="connectBtn">اتصال</button>
-                <button id="disconnectBtn" disabled>قطع الاتصال</button>
-            </div>
-            <div id="connectionStatus" class="status">غير متصل</div>
+    <div class="connection-panel">
+        <div class="input-group">
+            <input type="text" id="usernameInput" placeholder="ادخل اسم المستخدم في تيك توك">
+            <button id="connectBtn">اتصال</button>
+            <button id="disconnectBtn" disabled>قطع الاتصال</button>
         </div>
+        <div id="connectionStatus" class="status">غير متصل</div>
+    </div>
 
-        <div class="stats">
-            <div class="stat-item">
-                <span>المشاهدين: </span>
-                <span id="viewerCount">0</span>
-            </div>
-            <div class="stat-item">
-                <span>الكرات النشطة: </span>
-                <span id="activeBalls">0</span>
-            </div>
+    <div class="stats">
+        <div class="stat-item">
+            <span>المشاهدين: </span>
+            <span id="viewerCount">0</span>
         </div>
+        <div class="stat-item">
+            <span>الكرات النشطة: </span>
+            <span id="activeBalls">0</span>
+        </div>
+    </div>
 
-        <div id="gameArea" class="game-area">
-            <!-- الكرات ستظهر هنا -->
-        </div>
-
-        <div class="controls">
-            <button id="clearBalls">مسح جميع الكرات</button>
-            <button id="pauseAnimation">إيقاف/تشغيل الحركة</button>
-        </div>
+    <div id="gameArea" class="game-area">
+        <!-- الكرات ستظهر هنا -->
     </div>
 
     <script src="chat-balls.js"></script>
