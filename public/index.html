@@ -29,14 +29,9 @@
                 <span class="stat-label">الكرات النشطة:</span>
                 <span id="activeBalls">0</span>
             </div>
-            <div class="stat">
-                <button id="fullscreenBtn" onclick="toggleFullscreen()">📱 شاشة كاملة</button>
-            </div>
         </div>
 
-        <div id="gameArea" class="game-area">
-            <canvas id="gameCanvas" width="800" height="600"></canvas>
-        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
 
         <div class="controls">
             🎮 كل شخص يكتب في الدردشة يظهر ككرة متحركة بصورته واسمه
@@ -51,39 +46,6 @@
                 audioEnabled = !audioEnabled;
                 document.getElementById('audioToggle').textContent = audioEnabled ? 'إيقاف الصوت' : 'تشغيل الصوت';
             }
-
-            function toggleFullscreen() {
-                const gameArea = document.getElementById('gameArea');
-                const fullscreenBtn = document.getElementById('fullscreenBtn');
-                
-                if (!document.fullscreenElement) {
-                    gameArea.requestFullscreen().then(() => {
-                        gameArea.classList.add('fullscreen-mode');
-                        fullscreenBtn.textContent = '🔙 خروج';
-                        resizeCanvas();
-                    }).catch(err => {
-                        console.log('Fullscreen error:', err);
-                    });
-                } else {
-                    document.exitFullscreen().then(() => {
-                        gameArea.classList.remove('fullscreen-mode');
-                        fullscreenBtn.textContent = '📱 شاشة كاملة';
-                        resizeCanvas();
-                    });
-                }
-            }
-
-            // Listen for fullscreen changes
-            document.addEventListener('fullscreenchange', () => {
-                const gameArea = document.getElementById('gameArea');
-                const fullscreenBtn = document.getElementById('fullscreenBtn');
-                
-                if (!document.fullscreenElement) {
-                    gameArea.classList.remove('fullscreen-mode');
-                    fullscreenBtn.textContent = '📱 شاشة كاملة';
-                    resizeCanvas();
-                }
-            });
         </script>
     </div>
 

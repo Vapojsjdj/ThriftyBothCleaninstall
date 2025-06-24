@@ -48,41 +48,34 @@ io.on('connection', (socket) => {
       });
     });
 
-    // Chat messages with enhanced error handling and validation
+    // Chat messages with enhanced error handling
     tiktokLiveConnection.on('chat', data => {
       try {
-        if (data && typeof data === 'object' && data.uniqueId) {
-          const safeData = {
-            username: String(data.uniqueId || 'Unknown'),
-            nickname: String(data.nickname || data.displayId || data.uniqueId || 'Unknown'),
-            message: String(data.comment || data.text || ''),
-            profilePictureUrl: String(data.profilePictureUrl || data.avatar || ''),
+        if (data && data.uniqueId) {
+          socket.emit('chat_message', {
+            username: data.uniqueId || 'Unknown',
+            nickname: data.nickname || data.uniqueId || 'Unknown',
+            message: data.comment || '',
+            profilePictureUrl: data.profilePictureUrl || '',
             timestamp: new Date().toLocaleTimeString()
-          };
-          
-          // Only emit if we have valid data
-          if (safeData.username !== 'Unknown' || safeData.message) {
-            socket.emit('chat_message', safeData);
-          }
+          });
         }
       } catch (err) {
         console.log('Chat event error handled:', err.message);
       }
     });
 
-    // Gifts with enhanced safe property access
+    // Gifts with safe property access
     tiktokLiveConnection.on('gift', data => {
       try {
         if (data && data.uniqueId) {
-          const giftDetails = data.giftDetails || data.gift || {};
           socket.emit('gift_received', {
             username: data.uniqueId || 'Unknown',
             nickname: data.nickname || data.uniqueId || 'Unknown',
-            giftName: giftDetails.giftName || data.giftName || 'Unknown Gift',
+            giftName: (data.giftDetails && data.giftDetails.giftName) || data.giftName || 'Unknown Gift',
             giftType: data.giftType || 0,
             diamondCount: data.diamondCount || 0,
             profilePictureUrl: data.profilePictureUrl || '',
-            giftImage: giftDetails.giftImage || giftDetails.image || '',
             timestamp: new Date().toLocaleTimeString()
           });
         }
@@ -150,43 +143,22 @@ io.on('connection', (socket) => {
       }
     });
 
-    // Enhanced error handling with detailed logging
+    // Enhanced error handling - prevent disconnections
     tiktokLiveConnection.on('error', err => {
-      const errorMessage = err?.message || err?.toString() || 'Unknown error';
-      console.log('TikTok connection error handled:', errorMessage);
-      
-      // Only emit specific errors to client
-      if (errorMessage.includes('Failed to extract Room ID') || 
-          errorMessage.includes('User might be offline') ||
-          errorMessage.includes('Invalid username')) {
-        socket.emit('tiktok_error', { message: errorMessage });
-      }
+      console.log('TikTok connection error handled (connection maintained):', err?.message || 'Unknown error');
+      // Don't emit error to client to prevent disconnection
     });
 
-    // Add connection monitoring with retry logic
+    // Add connection monitoring
     tiktokLiveConnection.on('disconnected', () => {
       console.log('TikTok connection lost for user:', username);
       socket.emit('tiktok_error', { message: 'Connection lost, please try reconnecting' });
     });
 
-    // Add websocket error handling
-    tiktokLiveConnection.on('websocketConnected', () => {
-      console.log('WebSocket connected successfully for:', username);
-    });
-
-    // Monitor connection health with safe checks
+    // Monitor connection health
     const healthCheck = setInterval(() => {
-      try {
-        if (tiktokLiveConnection && tiktokLiveConnection.connection) {
-          // Simple ping to check if connection is alive
-          const isConnected = tiktokLiveConnection.connection.readyState === 1;
-          if (!isConnected) {
-            console.log('Connection health check failed');
-            clearInterval(healthCheck);
-          }
-        }
-      } catch (err) {
-        console.log('Health check error:', err.message);
+      if (tiktokLiveConnection && tiktokLiveConnection.getState() !== 'connected') {
+        console.log('Connection health check failed, attempting reconnect...');
         clearInterval(healthCheck);
       }
     }, 30000); // Check every 30 seconds
