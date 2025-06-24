@@ -129,18 +129,25 @@ socket.on('connect', () => {
 socket.on('tiktok_error', (error) => {
     console.log('TikTok Error:', error);
     
-    if (error && error.isReconnecting) {
+    // Skip null or empty errors
+    if (!error) {
+        console.log('Received null error, ignoring...');
+        return;
+    }
+    
+    if (error.isReconnecting) {
         updateConnectionStatus(error.message || 'جاري إعادة الاتصال...', false);
-    } else if (error && error.needsManualReconnect) {
+    } else if (error.needsManualReconnect) {
         updateConnectionStatus(error.message || 'يرجى إعادة الاتصال يدوياً', false);
         // Reset connection state
         isConnected = false;
         connectBtn.disabled = false;
         disconnectBtn.disabled = true;
         usernameInput.disabled = false;
-    } else {
-        updateConnectionStatus('خطأ في الاتصال: ' + (error?.message || 'خطأ غير معروف'), false);
+    } else if (error.message) {
+        updateConnectionStatus('خطأ في الاتصال: ' + error.message, false);
     }
+    // Ignore errors without meaningful content
 });
 
 // Handle successful auto-reconnection
