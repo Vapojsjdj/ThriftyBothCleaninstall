@@ -71,22 +71,26 @@ io.on('connection', (socket) => {
       try {
         // Skip if data is null/undefined or missing required fields
         if (!data || !data.uniqueId) {
-          console.log('Gift data missing required fields, skipping...');
           return;
         }
 
         // Safe gift name extraction with multiple fallbacks
         let giftName = 'Unknown Gift';
-        if (data.giftName) {
-          giftName = data.giftName;
-        } else if (data.giftDetails && typeof data.giftDetails === 'object') {
-          if (data.giftDetails.giftName) {
-            giftName = data.giftDetails.giftName;
-          } else if (data.giftDetails.name) {
-            giftName = data.giftDetails.name;
+        try {
+          if (data.giftName) {
+            giftName = data.giftName;
+          } else if (data.giftDetails && typeof data.giftDetails === 'object') {
+            if (data.giftDetails.giftName) {
+              giftName = data.giftDetails.giftName;
+            } else if (data.giftDetails.name) {
+              giftName = data.giftDetails.name;
+            }
+          } else if (data.gift && data.gift.name) {
+            giftName = data.gift.name;
           }
-        } else if (data.gift && data.gift.name) {
-          giftName = data.gift.name;
+        } catch (giftNameErr) {
+          // If gift name extraction fails, use default
+          giftName = 'Gift';
         }
 
         socket.emit('gift_received', {
@@ -99,8 +103,8 @@ io.on('connection', (socket) => {
           timestamp: new Date().toLocaleTimeString()
         });
       } catch (err) {
-        console.log('Gift event error handled safely:', err?.message || 'Unknown gift error');
-        // Don't re-throw the error to prevent disconnection
+        // Silently handle gift errors to prevent disconnection
+        return;
       }
     });
 
@@ -165,57 +169,49 @@ io.on('connection', (socket) => {
 
     // Enhanced error handling with auto-reconnection
     let reconnectAttempts = 0;
-    const maxReconnectAttempts = 2; // Reduce attempts to prevent spam
+    const maxReconnectAttempts = 1; // Reduce attempts to prevent spam
     let isReconnecting = false;
     
     tiktokLiveConnection.on('error', err => {
-      console.log('TikTok connection error:', err?.message || 'Unknown error');
-      
-      // Skip reconnection if already reconnecting or if it's a data parsing error
-      if (isReconnecting || (err?.message && err.message.includes('giftImage'))) {
-        console.log('Skipping reconnection for this error type');
+      // Skip data parsing errors completely
+      if (err?.message && (err.message.includes('giftImage') || err.message.includes('Cannot read properties'))) {
         return;
       }
       
-      // Attempt auto-reconnection
-      if (reconnectAttempts < maxReconnectAttempts) {
-        isReconnecting = true;
-        reconnectAttempts++;
-        console.log(`Auto-reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
-        
-        setTimeout(() => {
-          // Check if still connected before attempting reconnection
-          try {
-            const currentState = tiktokLiveConnection.getState ? tiktokLiveConnection.getState() : 'unknown';
-            if (currentState === 'connected') {
-              console.log('Already connected, skipping reconnection');
-              isReconnecting = false;
-              return;
-            }
-          } catch (stateErr) {
-            console.log('Could not check connection state');
-          }
+      console.log('TikTok connection error:', err?.message || 'Unknown error');
+      
+      // Skip reconnection if already reconnecting
+      if (isReconnecting) {
+        return;
+      }
+      
+      // Only reconnect for actual connection errors
+      if (err?.message && (err.message.includes('connect') || err.message.includes('timeout'))) {
+        if (reconnectAttempts < maxReconnectAttempts) {
+          isReconnecting = true;
+          reconnectAttempts++;
+          console.log(`Auto-reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
           
-          tiktokLiveConnection.connect().then(state => {
-            console.log(`Auto-reconnected to roomId ${state.roomId}`);
-            socket.emit('tiktok_reconnected', { 
-              success: true, 
-              roomId: state.roomId,
-              attempt: reconnectAttempts 
-            });
-            reconnectAttempts = 0; // Reset on success
-            isReconnecting = false;
-          }).catch((reconnectErr) => {
-            console.error(`Auto-reconnection attempt ${reconnectAttempts} failed:`, reconnectErr?.message);
-            isReconnecting = false;
-            if (reconnectAttempts >= maxReconnectAttempts) {
+          setTimeout(() => {
+            tiktokLiveConnection.connect().then(state => {
+              console.log(`Auto-reconnected to roomId ${state.roomId}`);
+              socket.emit('tiktok_reconnected', { 
+                success: true, 
+                roomId: state.roomId,
+                attempt: reconnectAttempts 
+              });
+              reconnectAttempts = 0;
+              isReconnecting = false;
+            }).catch((reconnectErr) => {
+              console.error(`Auto-reconnection failed:`, reconnectErr?.message);
+              isReconnecting = false;
               socket.emit('tiktok_error', { 
                 message: 'فشل في إعادة الاتصال، يرجى المحاولة يدوياً',
                 needsManualReconnect: true 
               });
-            }
-          });
-        }, 5000); // Fixed 5 second delay
+            });
+          }, 3000);
+        }
       }
     });
 

@@ -127,13 +127,12 @@ socket.on('connect', () => {
 
 // Handle TikTok-specific errors with auto-reconnection
 socket.on('tiktok_error', (error) => {
-    console.log('TikTok Error:', error);
-    
-    // Skip null or empty errors
-    if (!error) {
-        console.log('Received null error, ignoring...');
+    // Skip null or empty errors silently
+    if (!error || error === null) {
         return;
     }
+    
+    console.log('TikTok Error:', error);
     
     if (error.isReconnecting) {
         updateConnectionStatus(error.message || 'جاري إعادة الاتصال...', false);
@@ -147,7 +146,6 @@ socket.on('tiktok_error', (error) => {
     } else if (error.message) {
         updateConnectionStatus('خطأ في الاتصال: ' + error.message, false);
     }
-    // Ignore errors without meaningful content
 });
 
 // Handle successful auto-reconnection
