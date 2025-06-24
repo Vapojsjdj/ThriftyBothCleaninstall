@@ -85,24 +85,50 @@ socket.on('tiktok_error', (error) => {
     console.error('TikTok Error:', error);
 });
 
-// Auto-reconnect on disconnect
+// Enhanced auto-reconnect with retry logic
+let reconnectAttempts = 0;
+const maxReconnectAttempts = 5;
+
 socket.on('disconnect', () => {
     if (isConnected) {
         console.log('Connection lost, attempting to reconnect...');
-        setTimeout(() => {
-            if (!socket.connected) {
-                socket.connect();
+        updateConnectionStatus('انقطع الاتصال، جاري المحاولة مرة أخرى...', false);
+        
+        const attemptReconnect = () => {
+            if (reconnectAttempts < maxReconnectAttempts && !socket.connected) {
+                reconnectAttempts++;
+                console.log(`Reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
+                
+                setTimeout(() => {
+                    if (!socket.connected) {
+                        socket.connect();
+                        setTimeout(attemptReconnect, 3000);
+                    }
+                }, 2000 * reconnectAttempts); // Exponential backoff
+            } else if (reconnectAttempts >= maxReconnectAttempts) {
+                updateConnectionStatus('فشل في الاتصال، يرجى إعادة تحميل الصفحة', false);
             }
-        }, 3000);
+        };
+        
+        attemptReconnect();
     }
 });
 
-// Handle connection restore
+// Handle successful reconnection
 socket.on('connect', () => {
+    reconnectAttempts = 0; // Reset attempts on successful connection
+    
     if (isConnected && usernameInput.value.trim()) {
         console.log('Reconnected, restoring TikTok connection...');
+        updateConnectionStatus('جاري إعادة الاتصال...', false);
         socket.emit('connect_tiktok', usernameInput.value.trim());
     }
+});
+
+// Handle TikTok-specific errors
+socket.on('tiktok_error', (error) => {
+    console.log('TikTok Error:', error);
+    updateConnectionStatus('خطأ في الاتصال: ' + (error.message || 'Unknown error'), false);
 });
 
 // Game functions
