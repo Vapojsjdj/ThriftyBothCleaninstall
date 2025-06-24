@@ -85,6 +85,26 @@ socket.on('tiktok_error', (error) => {
     console.error('TikTok Error:', error);
 });
 
+// Auto-reconnect on disconnect
+socket.on('disconnect', () => {
+    if (isConnected) {
+        console.log('Connection lost, attempting to reconnect...');
+        setTimeout(() => {
+            if (!socket.connected) {
+                socket.connect();
+            }
+        }, 3000);
+    }
+});
+
+// Handle connection restore
+socket.on('connect', () => {
+    if (isConnected && usernameInput.value.trim()) {
+        console.log('Reconnected, restoring TikTok connection...');
+        socket.emit('connect_tiktok', usernameInput.value.trim());
+    }
+});
+
 // Game functions
 function connectToTikTok() {
     const username = usernameInput.value.trim();

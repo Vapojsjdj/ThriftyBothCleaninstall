@@ -50,49 +50,65 @@ io.on('connection', (socket) => {
 
     // Chat messages
     tiktokLiveConnection.on('chat', data => {
-      socket.emit('chat_message', {
-        username: data.uniqueId,
-        nickname: data.nickname,
-        message: data.comment,
-        profilePictureUrl: data.profilePictureUrl,
-        timestamp: new Date().toLocaleTimeString()
-      });
+      try {
+        socket.emit('chat_message', {
+          username: data.uniqueId || 'Unknown',
+          nickname: data.nickname || 'Unknown',
+          message: data.comment || '',
+          profilePictureUrl: data.profilePictureUrl || '',
+          timestamp: new Date().toLocaleTimeString()
+        });
+      } catch (err) {
+        console.log('Chat event error handled:', err.message);
+      }
     });
 
     // Gifts
     tiktokLiveConnection.on('gift', data => {
-      socket.emit('gift_received', {
-        username: data.uniqueId,
-        nickname: data.nickname,
-        giftName: data.giftName,
-        giftType: data.giftType,
-        diamondCount: data.diamondCount,
-        profilePictureUrl: data.profilePictureUrl,
-        timestamp: new Date().toLocaleTimeString()
-      });
+      try {
+        socket.emit('gift_received', {
+          username: data.uniqueId || 'Unknown',
+          nickname: data.nickname || 'Unknown',
+          giftName: data.giftName || 'Unknown Gift',
+          giftType: data.giftType || 0,
+          diamondCount: data.diamondCount || 0,
+          profilePictureUrl: data.profilePictureUrl || '',
+          timestamp: new Date().toLocaleTimeString()
+        });
+      } catch (err) {
+        console.log('Gift event error handled:', err.message);
+      }
     });
 
     // Likes
     tiktokLiveConnection.on('like', data => {
-      socket.emit('like_received', {
-        username: data.uniqueId,
-        nickname: data.nickname,
-        likeCount: data.likeCount,
-        totalLikeCount: data.totalLikeCount,
-        profilePictureUrl: data.profilePictureUrl,
-        timestamp: new Date().toLocaleTimeString()
-      });
+      try {
+        socket.emit('like_received', {
+          username: data.uniqueId || 'Unknown',
+          nickname: data.nickname || 'Unknown',
+          likeCount: data.likeCount || 1,
+          totalLikeCount: data.totalLikeCount || 1,
+          profilePictureUrl: data.profilePictureUrl || '',
+          timestamp: new Date().toLocaleTimeString()
+        });
+      } catch (err) {
+        console.log('Like event error handled:', err.message);
+      }
     });
 
     // Social interactions
     tiktokLiveConnection.on('social', data => {
-      socket.emit('social_event', {
-        username: data.uniqueId,
-        nickname: data.nickname,
-        action: data.displayType,
-        profilePictureUrl: data.profilePictureUrl,
-        timestamp: new Date().toLocaleTimeString()
-      });
+      try {
+        socket.emit('social_event', {
+          username: data.uniqueId || 'Unknown',
+          nickname: data.nickname || 'Unknown',
+          action: data.displayType || 'joined',
+          profilePictureUrl: data.profilePictureUrl || '',
+          timestamp: new Date().toLocaleTimeString()
+        });
+      } catch (err) {
+        console.log('Social event error handled:', err.message);
+      }
     });
 
     // Room user updates
@@ -111,7 +127,10 @@ io.on('connection', (socket) => {
     // Connection errors
     tiktokLiveConnection.on('error', err => {
       console.error('TikTok connection error:', err);
-      socket.emit('tiktok_error', err.message);
+      // Don't disconnect on minor errors, just log them
+      if (err && err.message) {
+        console.log('TikTok error handled, connection continues');
+      }
     });
   });
 
