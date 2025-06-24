@@ -22,11 +22,33 @@ let audioEnabled = true;
 // Canvas setup
 function resizeCanvas() {
     const container = canvas.parentElement;
-    const maxWidth = Math.min(800, container.clientWidth - 40);
-    const maxHeight = 600;
+    const isFullscreen = container.classList.contains('fullscreen-mode');
     
-    canvas.width = maxWidth;
-    canvas.height = maxHeight;
+    if (isFullscreen) {
+        // Fullscreen mode - use viewport dimensions
+        const maxWidth = window.innerWidth - 40;
+        const maxHeight = window.innerHeight - 40;
+        
+        // Maintain aspect ratio
+        const aspectRatio = 4/3; // 800/600
+        let width = maxWidth;
+        let height = width / aspectRatio;
+        
+        if (height > maxHeight) {
+            height = maxHeight;
+            width = height * aspectRatio;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+    } else {
+        // Normal mode
+        const maxWidth = Math.min(800, container.clientWidth - 40);
+        const maxHeight = 600;
+        
+        canvas.width = maxWidth;
+        canvas.height = maxHeight;
+    }
 }
 
 resizeCanvas();
