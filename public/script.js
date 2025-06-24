@@ -126,6 +126,7 @@ function addChatBall(data) {
         existingBall.lastActivity = Date.now();
         existingBall.scale = 1.2; // Bounce effect
         existingBall.energy = Math.min(existingBall.energy + 10, 100);
+        playSound('new_chat');
     } else {
         // Create new ball
         const ball = new ChatBall(
@@ -137,6 +138,7 @@ function addChatBall(data) {
             data.profilePictureUrl
         );
         balls.push(ball);
+        playSound('new_chat');
     }
     
     updateActiveBalls();
@@ -149,6 +151,7 @@ function spawnGun() {
             Math.random() * (canvas.height - 60) + 30
         );
         guns.push(gun);
+        playSound('spawn_gun');
     }
 }
 
@@ -188,6 +191,56 @@ function playSound(type) {
                 oscillator.start();
                 oscillator.stop(audioContext.currentTime + 0.2);
                 break;
+            case 'collision':
+                oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.15);
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.15);
+                break;
+            case 'spawn_gun':
+                oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+                break;
+            case 'new_chat':
+                oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // C5
+                oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.1); // E5
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+                break;
+            case 'gift':
+                // Play a nice gift sound
+                oscillator.frequency.setValueAtTime(523, audioContext.currentTime); // C5
+                oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.1); // E5
+                oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.2); // G5
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+                break;
+            case 'like':
+                oscillator.frequency.setValueAtTime(600, audioContext.currentTime);
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.05);
+                gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+                break;
+            case 'death':
+                oscillator.frequency.setValueAtTime(400, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.5);
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.5);
+                break;
         }
     } catch (e) {
         console.log('Audio not supported');
@@ -199,6 +252,7 @@ function addGiftEffect(data) {
     if (ball) {
         ball.energy = Math.min(ball.energy + 30, 100);
         ball.scale = 1.5;
+        playSound('gift');
         
         // Add gift particles
         for (let i = 0; i < 10; i++) {
@@ -212,6 +266,7 @@ function addLikeEffect(data) {
     if (ball) {
         ball.size = Math.min(ball.size + 2, 40);
         ball.energy = Math.min(ball.energy + 5, 100);
+        playSound('like');
         
         // Add heart particles
         for (let i = 0; i < 5; i++) {
@@ -297,6 +352,11 @@ function update() {
         if (now - ball.lastActivity > 30000) {
             ball.active = false;
         }
+        
+        // Mark ball as inactive if energy reaches zero
+        if (ball.energy <= 0) {
+            ball.active = false;
+        }
     });
     
     // Update bullets
@@ -324,6 +384,7 @@ function update() {
                         // If ball dies, transfer gun to shooter
                         if (ball.energy <= 0) {
                             ball.active = false;
+                            playSound('death');
                             if (!effect.shooter.hasGun) {
                                 effect.shooter.hasGun = ball.hasGun;
                             }
@@ -426,6 +487,7 @@ function checkBallCollisions() {
                 
                 // Add collision effect
                 effects.push(new CollisionEffect((ball1.x + ball2.x) / 2, (ball1.y + ball2.y) / 2));
+                playSound('collision');
             }
         }
     }
@@ -527,12 +589,6 @@ class ChatBall {
         
         // Update rotation
         this.rotation += 0.01;
-        
-        // Decrease energy over time
-        this.energy -= 0.1;
-        if (this.energy <= 0) {
-            this.active = false;
-        }
     }
     
     draw(ctx) {
