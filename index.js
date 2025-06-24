@@ -167,26 +167,41 @@ io.on('connection', (socket) => {
       }
     });
 
-    // Enhanced error handling with auto-reconnection
+    // Enhanced error handling with complete data parsing error suppression
     let reconnectAttempts = 0;
-    const maxReconnectAttempts = 1; // Reduce attempts to prevent spam
+    const maxReconnectAttempts = 1;
     let isReconnecting = false;
     
     tiktokLiveConnection.on('error', err => {
-      // Skip data parsing errors completely
-      if (err?.message && (err.message.includes('giftImage') || err.message.includes('Cannot read properties'))) {
+      // Completely ignore all data parsing errors from tiktok-live-connector
+      if (err?.message && (
+        err.message.includes('giftImage') || 
+        err.message.includes('Cannot read properties') ||
+        err.message.includes('giftDetails') ||
+        err.message.includes('data-converter') ||
+        err.message.includes('TypeError') ||
+        err.message.includes('undefined')
+      )) {
+        // Silently skip these errors to prevent disconnection
         return;
       }
       
-      console.log('TikTok connection error:', err?.message || 'Unknown error');
+      // Only log actual connection errors
+      if (err?.message && !err.message.includes('data-converter')) {
+        console.log('TikTok connection error:', err.message);
+      }
       
       // Skip reconnection if already reconnecting
       if (isReconnecting) {
         return;
       }
       
-      // Only reconnect for actual connection errors
-      if (err?.message && (err.message.includes('connect') || err.message.includes('timeout'))) {
+      // Only reconnect for actual connection errors (not data parsing errors)
+      if (err?.message && (
+        err.message.includes('connect') || 
+        err.message.includes('timeout') ||
+        err.message.includes('WebSocket')
+      ) && !err.message.includes('data-converter')) {
         if (reconnectAttempts < maxReconnectAttempts) {
           isReconnecting = true;
           reconnectAttempts++;

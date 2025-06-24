@@ -127,8 +127,17 @@ socket.on('connect', () => {
 
 // Handle TikTok-specific errors with auto-reconnection
 socket.on('tiktok_error', (error) => {
-    // Skip null or empty errors silently
-    if (!error || error === null) {
+    // Skip null, empty, or data parsing errors silently
+    if (!error || error === null || error === undefined) {
+        return;
+    }
+    
+    // Skip logging data parsing errors
+    if (error.message && (
+        error.message.includes('giftImage') || 
+        error.message.includes('data-converter') ||
+        error.message.includes('Cannot read properties')
+    )) {
         return;
     }
     
