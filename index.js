@@ -35,6 +35,7 @@ io.on('connection', (socket) => {
     // TikTok events
     tiktokLiveConnection.connect().then(state => {
       console.log(`Connected to roomId ${state.roomId}`);
+      reconnectAttempts = 0; // Reset attempts on successful connection
       socket.emit('tiktok_connected', { 
         success: true, 
         roomId: state.roomId,
@@ -44,7 +45,7 @@ io.on('connection', (socket) => {
       console.error('Failed to connect', err);
       socket.emit('tiktok_connected', { 
         success: false, 
-        error: err.message 
+        error: err?.message || 'فشل في الاتصال بـ TikTok'
       });
     });
 
@@ -143,25 +144,60 @@ io.on('connection', (socket) => {
       }
     });
 
-    // Enhanced error handling - prevent disconnections
+    // Enhanced error handling with auto-reconnection
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 3;
+    
     tiktokLiveConnection.on('error', err => {
-      console.log('TikTok connection error handled (connection maintained):', err?.message || 'Unknown error');
-      // Don't emit error to client to prevent disconnection
+      console.log('TikTok connection error:', err?.message || 'Unknown error');
+      
+      // Attempt auto-reconnection
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        console.log(`Auto-reconnection attempt ${reconnectAttempts}/${maxReconnectAttempts}`);
+        
+        setTimeout(() => {
+          tiktokLiveConnection.connect().then(state => {
+            console.log(`Auto-reconnected to roomId ${state.roomId}`);
+            socket.emit('tiktok_reconnected', { 
+              success: true, 
+              roomId: state.roomId,
+              attempt: reconnectAttempts 
+            });
+            reconnectAttempts = 0; // Reset on success
+          }).catch((reconnectErr) => {
+            console.error(`Auto-reconnection attempt ${reconnectAttempts} failed:`, reconnectErr?.message);
+            if (reconnectAttempts >= maxReconnectAttempts) {
+              socket.emit('tiktok_error', { 
+                message: 'فشل في إعادة الاتصال، يرجى المحاولة يدوياً',
+                needsManualReconnect: true 
+              });
+            }
+          });
+        }, 3000 * reconnectAttempts); // Progressive delay
+      }
     });
 
     // Add connection monitoring
     tiktokLiveConnection.on('disconnected', () => {
       console.log('TikTok connection lost for user:', username);
-      socket.emit('tiktok_error', { message: 'Connection lost, please try reconnecting' });
+      socket.emit('tiktok_error', { 
+        message: 'انقطع الاتصال، جاري إعادة المحاولة...',
+        isReconnecting: true 
+      });
     });
 
-    // Monitor connection health
+    // Monitor connection health with improved stability
     const healthCheck = setInterval(() => {
-      if (tiktokLiveConnection && tiktokLiveConnection.getState() !== 'connected') {
-        console.log('Connection health check failed, attempting reconnect...');
-        clearInterval(healthCheck);
+      try {
+        if (tiktokLiveConnection && tiktokLiveConnection.getState() !== 'connected') {
+          console.log('Connection health check failed for user:', username);
+          // Don't clear interval immediately, give it a chance to recover
+        }
+      } catch (healthErr) {
+        console.log('Health check error:', healthErr?.message);
       }
-    }, 30000); // Check every 30 seconds
+    }, 20000); // Check every 20 seconds
 
     // Store health check interval for cleanup
     tiktokConnections.set(socket.id + '_health', healthCheck);

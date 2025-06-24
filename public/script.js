@@ -125,10 +125,37 @@ socket.on('connect', () => {
     }
 });
 
-// Handle TikTok-specific errors
+// Handle TikTok-specific errors with auto-reconnection
 socket.on('tiktok_error', (error) => {
     console.log('TikTok Error:', error);
-    updateConnectionStatus('خطأ في الاتصال: ' + (error.message || 'Unknown error'), false);
+    
+    if (error && error.isReconnecting) {
+        updateConnectionStatus(error.message || 'جاري إعادة الاتصال...', false);
+    } else if (error && error.needsManualReconnect) {
+        updateConnectionStatus(error.message || 'يرجى إعادة الاتصال يدوياً', false);
+        // Reset connection state
+        isConnected = false;
+        connectBtn.disabled = false;
+        disconnectBtn.disabled = true;
+        usernameInput.disabled = false;
+    } else {
+        updateConnectionStatus('خطأ في الاتصال: ' + (error?.message || 'خطأ غير معروف'), false);
+    }
+});
+
+// Handle successful auto-reconnection
+socket.on('tiktok_reconnected', (data) => {
+    if (data.success) {
+        console.log('Auto-reconnected successfully');
+        updateConnectionStatus('تم إعادة الاتصال تلقائياً ✅', true);
+        
+        // Show success message briefly
+        setTimeout(() => {
+            if (isConnected && usernameInput.value.trim()) {
+                updateConnectionStatus('متصل بـ ' + usernameInput.value.trim(), true);
+            }
+        }, 3000);
+    }
 });
 
 // Game functions
