@@ -13,293 +13,14 @@ body {
     direction: rtl;
 }
 
-.game-container {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.player-selection {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: linear-gradient(135deg, #1a1a2e, #16213e);
-}
-
-.player-selection h2 {
-    color: #ffd700;
-    font-size: 28px;
-    margin-bottom: 40px;
-    text-align: center;
-    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-}
-
-.player-choices {
-    display: flex;
-    gap: 60px;
-    align-items: center;
-}
-
-.player-choice {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 30px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 20px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 2px solid transparent;
-}
-
-.player-choice:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: #ffd700;
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(255, 215, 0, 0.3);
-}
-
-.choice-avatar {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 4px solid #ffd700;
-    margin-bottom: 20px;
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
-}
-
-.choice-name {
-    font-size: 24px;
-    font-weight: bold;
-    color: #ffd700;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
-}
-
-.game-content {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-}
-
-.prediction-result {
-    font-size: 20px;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-.prediction-correct {
-    color: #4CAF50;
-}
-
-.prediction-wrong {
-    color: #F44336;
-}
-
-.game-header {
-    padding: 15px;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(10px);
+#gameContainer {
     position: relative;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    width: 100vw;
+    height: 100vh;
 }
 
-.timer-display {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: rgba(255, 215, 0, 0.2);
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: 2px solid #ffd700;
-}
-
-#gameTimer {
-    color: #ffd700;
-    font-size: 18px;
-    font-weight: bold;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
-}
-
-.settings-toggle {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    z-index: 10;
-}
-
-.settings-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    padding: 10px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 18px;
-    transition: all 0.3s ease;
-}
-
-.settings-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.1);
-}
-
-.settings-panel {
-    position: absolute;
-    top: 80px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.9);
-    padding: 20px;
-    border-radius: 15px;
-    backdrop-filter: blur(20px);
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    z-index: 20;
-    min-width: 300px;
-}
-
-.settings-panel h3 {
-    color: #ffd700;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-.setting-item {
-    margin-bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.setting-item label {
-    color: white;
-    font-size: 14px;
-    min-width: 120px;
-}
-
-.setting-item input[type="range"] {
-    flex: 1;
-    height: 6px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 3px;
-    outline: none;
-}
-
-.setting-item input[type="range"]::-webkit-slider-thumb {
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: #ffd700;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-.setting-item span {
-    color: #ffd700;
-    font-weight: bold;
-    min-width: 40px;
-    text-align: center;
-}
-
-.setting-item select {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 5px;
-    outline: none;
-}
-
-.setting-item select option {
-    background: #1a1a2e;
-    color: white;
-}
-
-.player-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-.player {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-
-.player-avatar {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: 3px solid #ffd700;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-}
-
-.player-name {
-    font-size: 16px;
-    font-weight: bold;
-    color: #ffd700;
-}
-
-.health-bar {
-    width: 120px;
-    height: 12px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.health-fill {
-    height: 100%;
-    border-radius: 6px;
-    transition: width 0.3s ease;
-}
-
-.yamal-health {
-    background: linear-gradient(90deg, #4CAF50, #8BC34A);
-}
-
-.ronaldo-health {
-    background: linear-gradient(90deg, #2196F3, #03DAC6);
-}
-
-.health-text {
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.vs {
-    font-size: 24px;
-    font-weight: bold;
-    color: #ff6b6b;
-    text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-#gameCanvas {
-    flex: 1;
-    background: linear-gradient(45deg, #0f3460, #16537e);
-    border-top: 2px solid rgba(255, 255, 255, 0.2);
-    max-width: 500px;
-    max-height: 400px;
-    margin: 0 auto;
-    border-radius: 15px;
-}
-
-.game-over {
+/* اتصال تيك توك */
+.connection-panel {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -310,17 +31,298 @@ body {
     text-align: center;
     backdrop-filter: blur(20px);
     border: 2px solid rgba(255, 215, 0, 0.5);
+    z-index: 1000;
 }
 
-.winner-text {
-    font-size: 32px;
-    font-weight: bold;
+.connection-panel h2 {
     color: #ffd700;
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.connection-panel p {
+    color: #fff;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+.connection-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+}
+
+.connection-form input {
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #ffd700;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-size: 16px;
+    width: 300px;
+    text-align: center;
+}
+
+.connection-form button {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+#connectBtn {
+    background: linear-gradient(45deg, #4CAF50, #45a049);
+    color: white;
+}
+
+#connectBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(76, 175, 80, 0.4);
+}
+
+#disconnectBtn {
+    background: #ccc;
+    color: white;
+}
+
+#disconnectBtn:enabled {
+    background: linear-gradient(45deg, #f44336, #d32f2f);
+}
+
+#disconnectBtn:enabled:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(244, 67, 54, 0.4);
+}
+
+#connectionStatus {
+    margin-top: 15px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* واجهة اللعبة */
+#gameUI {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+
+#score {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #ffd700;
+}
+
+#healthBar {
+    width: 200px;
+    height: 20px;
+    background: rgba(255,0,0,0.3);
+    border: 2px solid #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+#health {
+    height: 100%;
+    background: linear-gradient(90deg, #ff4444, #ff6666);
+    width: 100%;
+    transition: width 0.3s ease;
+}
+
+#ammo, #enemyCount {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+/* أزرار الكاميرا */
+#cameraControls {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.camera-btn {
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.3s;
+    font-family: inherit;
+}
+
+.camera-btn:hover {
+    background: rgba(0,0,0,0.9);
+}
+
+.camera-btn.active {
+    background: #4CAF50;
+}
+
+/* مربع التعليقات المباشر */
+.live-comments {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    max-height: 400px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 15px;
+    padding: 15px;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.live-comments h3 {
+    color: #ffd700;
+    font-size: 16px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+#commentsList {
+    max-height: 320px;
+    overflow-y: auto;
+    font-size: 12px;
+}
+
+.comment-item {
+    background: rgba(255, 255, 255, 0.1);
+    margin-bottom: 8px;
+    padding: 8px;
+    border-radius: 8px;
+    border-left: 3px solid #ffd700;
+}
+
+.comment-user {
+    font-weight: bold;
+    color: #4CAF50;
+    font-size: 11px;
+}
+
+.comment-text {
+    color: white;
+    margin-top: 3px;
+}
+
+.comment-new {
+    animation: commentPulse 1s ease-in-out;
+    background: rgba(255, 215, 0, 0.2) !important;
+    border-left-color: #ff6b6b;
+}
+
+@keyframes commentPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* تأثيرات النصوص الطائرة */
+#floatingTexts {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 200;
+}
+
+.floating-text {
+    position: absolute;
+    font-weight: bold;
+    font-size: 20px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    animation: floatUp 3s ease-out forwards;
+    pointer-events: none;
+}
+
+.floating-enemy {
+    color: #ff6b6b;
+}
+
+.floating-kill {
+    color: #4CAF50;
+}
+
+.floating-gift {
+    color: #ffd700;
+}
+
+@keyframes floatUp {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-100px);
+    }
+}
+
+/* زر الصوت */
+#audioToggle {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.7);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 100;
+    font-size: 18px;
+}
+
+/* شاشة انتهاء اللعبة */
+#gameOver {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    border: 2px solid rgba(255, 215, 0, 0.5);
+    display: none;
+    z-index: 1000;
+}
+
+#gameOver h2 {
+    color: #ffd700;
+    font-size: 32px;
     margin-bottom: 20px;
     text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
 }
 
-.restart-btn {
+#gameOver p {
+    color: white;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+#restartBtn {
     padding: 15px 30px;
     font-size: 18px;
     background: linear-gradient(45deg, #ff6b6b, #ee5a24);
@@ -332,82 +334,88 @@ body {
     font-family: inherit;
 }
 
-.restart-btn:hover {
+#restartBtn:hover {
     transform: translateY(-2px);
     box-shadow: 0 10px 20px rgba(255, 107, 107, 0.4);
 }
 
+/* تعليمات */
+#instructions {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    color: white;
+    font-size: 12px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+    max-width: 300px;
+}
+
+/* اخفاء شريط التمرير */
+#commentsList::-webkit-scrollbar {
+    width: 4px;
+}
+
+#commentsList::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+#commentsList::-webkit-scrollbar-thumb {
+    background: rgba(255, 215, 0, 0.5);
+    border-radius: 2px;
+}
+
+/* الاستجابة للشاشات الصغيرة */
 @media (max-width: 768px) {
-    .player-info {
-        gap: 20px;
+    .connection-panel {
+        padding: 20px;
+        width: 90%;
     }
     
-    .player-avatar {
-        width: 50px;
-        height: 50px;
+    .connection-form input {
+        width: 100%;
     }
     
-    .health-bar {
-        width: 100px;
+    .live-comments {
+        width: 250px;
+        max-height: 300px;
     }
     
-    .vs {
-        font-size: 20px;
+    #gameUI {
+        font-size: 14px;
     }
     
-    .game-header {
-        padding: 10px;
+    #healthBar {
+        width: 150px;
     }
     
-    .settings-panel {
-        left: 10px;
-        right: 10px;
-        min-width: auto;
+    #instructions {
+        font-size: 10px;
+        max-width: 200px;
     }
     
-    .setting-item {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 5px;
-    }
-    
-    .setting-item label {
-        min-width: auto;
-        text-align: center;
-    }
-    
-    .player-choices {
-        flex-direction: column;
-        gap: 40px;
-    }
-    
-    .choice-avatar {
-        width: 100px;
-        height: 100px;
-    }
-    
-    .choice-name {
-        font-size: 20px;
-    }
-    
-    .player-selection h2 {
+    .connection-panel h2 {
         font-size: 24px;
-        margin-bottom: 30px;
-        padding: 0 20px;
     }
     
-    .game-header {
-        flex-direction: column;
-        gap: 10px;
-        padding: 10px;
+    .connection-panel p {
+        font-size: 14px;
     }
-    
-    .timer-display {
-        position: static;
-        order: -1;
-    }
-    
-    .settings-toggle {
-        position: static;
-    }
+}
+
+/* تأثيرات إضافية */
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.glow {
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }

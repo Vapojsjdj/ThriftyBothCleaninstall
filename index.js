@@ -1,3 +1,4 @@
+
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
@@ -47,10 +48,11 @@ io.on('connection', (socket) => {
       });
     });
 
-    // Chat messages - look for votes
+    // Chat messages - create enemies from comments
     tiktokLiveConnection.on('chat', data => {
       try {
         if (data && data.uniqueId && data.comment) {
+          console.log(`New comment from ${data.uniqueId}: ${data.comment}`);
           socket.emit('chat_message', {
             username: data.uniqueId || 'Unknown',
             nickname: data.nickname || data.uniqueId || 'Unknown',
@@ -60,12 +62,11 @@ io.on('connection', (socket) => {
           });
         }
       } catch (err) {
-        // Silently handle errors
-        return;
+        console.log('Error processing chat message:', err.message);
       }
     });
 
-    // Gifts - provide bonus damage
+    // Gifts - provide bonus power
     tiktokLiveConnection.on('gift', data => {
       try {
         if (!data || !data.uniqueId) {
@@ -89,17 +90,18 @@ io.on('connection', (socket) => {
           giftName = 'Gift';
         }
 
+        console.log(`Gift from ${data.uniqueId}: ${giftName}`);
         socket.emit('gift_received', {
           username: data.uniqueId || 'Unknown',
           nickname: data.nickname || data.uniqueId || 'Unknown',
           giftName: giftName,
           giftType: data.giftType || 0,
-          diamondCount: data.diamondCount || data.coins || 0,
+          diamondCount: data.diamondCount || data.coins || 1,
           profilePictureUrl: data.profilePictureUrl || '',
           timestamp: new Date().toLocaleTimeString()
         });
       } catch (err) {
-        return;
+        console.log('Error processing gift:', err.message);
       }
     });
 
@@ -107,6 +109,7 @@ io.on('connection', (socket) => {
     tiktokLiveConnection.on('like', data => {
       try {
         if (data && data.uniqueId) {
+          console.log(`Like from ${data.uniqueId}`);
           socket.emit('like_received', {
             username: data.uniqueId || 'Unknown',
             nickname: data.nickname || data.uniqueId || 'Unknown',
@@ -117,7 +120,7 @@ io.on('connection', (socket) => {
           });
         }
       } catch (err) {
-        return;
+        console.log('Error processing like:', err.message);
       }
     });
 
@@ -125,6 +128,7 @@ io.on('connection', (socket) => {
     tiktokLiveConnection.on('social', data => {
       try {
         if (data && data.uniqueId) {
+          console.log(`Social event from ${data.uniqueId}: ${data.displayType}`);
           socket.emit('social_event', {
             username: data.uniqueId || 'Unknown',
             nickname: data.nickname || data.uniqueId || 'Unknown',
@@ -134,7 +138,7 @@ io.on('connection', (socket) => {
           });
         }
       } catch (err) {
-        return;
+        console.log('Error processing social event:', err.message);
       }
     });
 
@@ -148,7 +152,7 @@ io.on('connection', (socket) => {
           });
         }
       } catch (err) {
-        return;
+        console.log('Error processing room update:', err.message);
       }
     });
 
@@ -158,13 +162,13 @@ io.on('connection', (socket) => {
         socket.emit('stream_ended');
         console.log('Stream ended for user:', username);
       } catch (err) {
-        return;
+        console.log('Error processing stream end:', err.message);
       }
     });
 
-    // Enhanced error handling - ignore data parsing errors completely
+    // Enhanced error handling
     tiktokLiveConnection.on('error', err => {
-      // Completely ignore all data parsing errors from tiktok-live-connector
+      // Skip common data parsing errors
       if (err?.message && (
         err.message.includes('giftImage') || 
         err.message.includes('Cannot read properties') ||
@@ -173,7 +177,6 @@ io.on('connection', (socket) => {
         err.message.includes('TypeError') ||
         err.message.includes('undefined')
       )) {
-        // Silently skip these errors to prevent disconnection
         return;
       }
 
@@ -186,11 +189,11 @@ io.on('connection', (socket) => {
       }
     });
 
-    // Add connection monitoring
+    // Connection monitoring
     tiktokLiveConnection.on('disconnected', () => {
       console.log('TikTok connection lost for user:', username);
       socket.emit('tiktok_error', { 
-        message: 'انقطع الاتصال'
+        message: 'انقطع الاتصال - يرجى المحاولة مرة أخرى'
       });
     });
   });
@@ -228,5 +231,6 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`3D Warrior Game Server running on port ${PORT}`);
+  console.log('🎮 Ready for TikTok Live connections!');
 });
