@@ -188,6 +188,7 @@ body {
     z-index: 50;
     backdrop-filter: blur(10px);
     border: 2px solid rgba(255, 215, 0, 0.3);
+    display: none;
 }
 
 .live-comments h3 {
@@ -277,20 +278,35 @@ body {
     }
 }
 
-/* زر الصوت */
-#audioToggle {
+/* أزرار الصوت والتحكم */
+#audioControls {
     position: absolute;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 100;
+}
+
+#audioToggle, #speechToggle {
     background: rgba(0,0,0,0.7);
     color: white;
     border: none;
-    padding: 10px;
+    padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
-    z-index: 100;
-    font-size: 18px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+#audioToggle:hover, #speechToggle:hover {
+    background: rgba(0,0,0,0.9);
+    transform: translateY(-2px);
+}
+
+#speechToggle.active {
+    background: #4CAF50;
 }
 
 /* شاشة انتهاء اللعبة */

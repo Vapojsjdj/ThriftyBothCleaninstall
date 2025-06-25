@@ -28,6 +28,88 @@ let playerCurrentRotation = 0;
 let activeCamera;
 let audioContext;
 let muzzleFlashLight;
+let speechEnabled = false;
+let speechSynthesis = window.speechSynthesis;
+let arabicVoice = null;
+let englishVoice = null;
+
+// إعداد الأصوات للقراءة
+function initSpeechVoices() {
+    const voices = speechSynthesis.getVoices();
+    
+    // البحث عن صوت عربي
+    arabicVoice = voices.find(voice => 
+        voice.lang.includes('ar') || 
+        voice.name.includes('Arabic') ||
+        voice.name.includes('عربي')
+    ) || voices.find(voice => voice.lang.includes('ar'));
+    
+    // البحث عن صوت إنجليزي
+    englishVoice = voices.find(voice => 
+        voice.lang.includes('en') || 
+        voice.name.includes('English')
+    ) || voices.find(voice => voice.lang.includes('en'));
+    
+    console.log('Arabic voice:', arabicVoice?.name);
+    console.log('English voice:', englishVoice?.name);
+}
+
+// تحديد لغة النص
+function detectLanguage(text) {
+    // فحص وجود حروف عربية
+    const arabicPattern = /[\u0600-\u06FF\u0750-\u077F]/;
+    return arabicPattern.test(text) ? 'arabic' : 'english';
+}
+
+// قراءة النص بالصوت المناسب
+function speakText(text, language = null) {
+    if (!speechEnabled || !text.trim()) return;
+    
+    // إيقاف أي قراءة سابقة
+    speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // تحديد اللغة تلقائياً إذا لم تُحدد
+    if (!language) {
+        language = detectLanguage(text);
+    }
+    
+    // تطبيق الصوت المناسب
+    if (language === 'arabic' && arabicVoice) {
+        utterance.voice = arabicVoice;
+        utterance.lang = 'ar-SA';
+    } else if (language === 'english' && englishVoice) {
+        utterance.voice = englishVoice;
+        utterance.lang = 'en-US';
+    }
+    
+    // إعدادات الصوت
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.volume = 0.8;
+    
+    speechSynthesis.speak(utterance);
+}
+
+function toggleSpeech() {
+    speechEnabled = !speechEnabled;
+    const button = document.getElementById('speechToggle');
+    
+    if (speechEnabled) {
+        button.textContent = '🔇 إيقاف التحدث';
+        button.classList.add('active');
+        
+        // اختبار القراءة
+        const testText = 'تم تفعيل قراءة النصوص. Speech synthesis activated.';
+        speakText(testText);
+        
+    } else {
+        button.textContent = '🎤 التحدث';
+        button.classList.remove('active');
+        speechSynthesis.cancel();
+    }
+}
 
 // إعداد الأصوات الافتراضية
 function initDefaultSounds() {
@@ -68,7 +150,7 @@ function playSound(buffer, volume = 1.0) {
 
 function toggleAudio() {
     audioEnabled = !audioEnabled;
-    document.getElementById('audioToggle').textContent = audioEnabled ? '🔊' : '🔇';
+    document.getElementById('audioToggle').textContent = audioEnabled ? '🔊 الأصوات' : '🔇 صامت';
 }
 
 // إعداد اللعبة ثلاثية الأبعاد
@@ -696,6 +778,10 @@ socket.on('chat_message', (data) => {
     // إضافة التعليق للقائمة
     addCommentToList(data.nickname || data.username, data.message);
     
+    // قراءة التعليق بالصوت
+    const speechText = `${data.nickname || data.username} يقول: ${data.message}`;
+    speakText(speechText);
+    
     // إنشاء عدو من التعليق
     const enemy = createEnemyFromComment(
         data.nickname || data.username, 
@@ -719,6 +805,10 @@ socket.on('gift_received', (data) => {
     
     // الهدايا تعطي قوة إضافية للاعب
     const bonusDamage = Math.min(data.diamondCount || 10, 50);
+    
+    // قراءة إشعار الهدية
+    const giftText = `${data.nickname || data.username} أرسل هدية ${data.giftName}! قوة إضافية ${bonusDamage}`;
+    speakText(giftText);
     
     showFloatingText(
         `🎁 ${data.nickname || data.username}: +${bonusDamage} قوة!`, 
@@ -751,6 +841,10 @@ socket.on('like_received', (data) => {
     // الإعجابات تعطي صحة إضافية
     const healAmount = Math.min(data.likeCount || 1, 10);
     playerHealth = Math.min(playerHealth + healAmount, 100);
+    
+    // قراءة إشعار الإعجاب
+    const likeText = `${data.nickname || data.username} أعجب بالمحتوى! صحة إضافية ${healAmount}`;
+    speakText(likeText);
     
     showFloatingText(
         `❤️ +${healAmount} صحة!`, 
@@ -785,6 +879,13 @@ window.addEventListener('resize', () => {
 
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// تهيئة أصوات القراءة
+if (speechSynthesis.onvoiceschanged !== undefined) {
+    speechSynthesis.onvoiceschanged = initSpeechVoices;
+} else {
+    initSpeechVoices();
+}
 
 // بدء اللعبة
 initGame();
